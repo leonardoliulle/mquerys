@@ -1,0 +1,16 @@
+let
+    Fonte = Excel.Workbook(File.Contents("W:\CRM\CONFIGURACAO\1_BASES\fila_solicitacoes_.xlsx"), null, true),
+    fila_solicitacoes_2019_04_13_14_Sheet = Fonte{[Item="fila_solicitacoes_2019_04_13_14",Kind="Sheet"]}[Data],
+    #"Tipo Alterado1" = Table.TransformColumnTypes(fila_solicitacoes_2019_04_13_14_Sheet,{{"Column1", type any}, {"Column2", type text}, {"Column3", type text}, {"Column4", type text}, {"Column5", type text}, {"Column6", type text}, {"Column7", type text}, {"Column8", type any}, {"Column9", type any}, {"Column10", type text}, {"Column11", type text}, {"Column12", type text}, {"Column13", type any}, {"Column14", type any}, {"Column15", type text}, {"Column16", type text}, {"Column17", type text}, {"Column18", type any}, {"Column19", type any}, {"Column20", type text}}),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Tipo Alterado1",{{"Column1", type any}, {"Column2", type text}, {"Column3", type text}, {"Column4", type text}, {"Column5", type text}, {"Column6", type text}, {"Column7", type text}, {"Column8", type any}, {"Column9", type any}, {"Column10", type text}, {"Column11", type text}, {"Column12", type text}, {"Column13", type text}, {"Column14", type any}, {"Column15", type text}, {"Column16", type text}, {"Column17", type text}, {"Column18", type any}, {"Column19", type any}, {"Column20", type text}}),
+    #"Cabeçalhos promovidos" = Table.PromoteHeaders(#"Tipo Alterado"),
+    #"Data Analisada" = Table.TransformColumns(#"Cabeçalhos promovidos",{{"DATA INICIO", each Date.From(DateTimeZone.From(_)), type date}, {"DATA FIM", each Date.From(DateTimeZone.From(_)), type date}}),
+    #"Personalização Adicionada" = Table.AddColumn(#"Data Analisada", "DataDif", each [DATA FIM]-[DATA INICIO]),
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"DataDif", Int64.Type}}),
+    #"Personalização Adicionada1" = Table.AddColumn(#"Tipo Alterado2", "PeriodoIndisp", each List.Dates(DateTime.Date([DATA INICIO]),[DataDif]+1, #duration(1, 0, 0, 0))),
+    #"PeriodoIndisp Expandido" = Table.ExpandListColumn(#"Personalização Adicionada1", "PeriodoIndisp"),
+    #"Tipo Alterado3" = Table.TransformColumnTypes(#"PeriodoIndisp Expandido",{{"PeriodoIndisp", Int64.Type}}),
+    #"Personalização Adicionada2" = Table.AddColumn(#"Tipo Alterado3", "Chave", each Text.From([PeriodoIndisp])&[MATRICULA TECNICO]),
+    #"Linhas Filtradas" = Table.SelectRows(#"Personalização Adicionada2", each ([TIPO] = "indisponibilidade") and ([STATUS] = "SOLICITACAO OK" or [STATUS] = "AGUARDANDO C.CAPACIDADE"))
+in
+    #"Linhas Filtradas"

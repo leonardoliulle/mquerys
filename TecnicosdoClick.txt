@@ -1,0 +1,25 @@
+let
+    Fonte = Excel.Workbook(File.Contents("W:\CRM\CONFIGURACAO\1_BASES\TecnicosdoClick_.xlsx"), null, true),
+    TecnicosdoClick_Sheet = Fonte{[Item="TecnicosdoClick",Kind="Sheet"]}[Data],
+    #"Cabeçalhos Promovidos" = Table.PromoteHeaders(TecnicosdoClick_Sheet),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Cabeçalhos Promovidos",{{"NOMETÉCNICO", type text}, {"MATRÍCULA", type text}, {"MATRICULAAUTORIZADOS", type text}, {"ATIVO", type text}, {"NAURA", type text}, {"CALENDARIO", type text}, {"REGIONAL", type text}, {"UF", type text}, {"PRESTADORA", type text}, {"GRAM", type text}, {"GRA", type text}, {"SETOR", type text}, {"RUA", type text}, {"CIDADE", type text}, {"CEP", type text}, {"LATITUDE", Int64.Type}, {"LONGITUDE", Int64.Type}, {"DISTMAXDESLOC", type text}, {"TIPODETÉCNICO", type text}, {"INÍCIOALMOÇO", type time}, {"DURAÇÃOALMOÇO", Int64.Type}, {"NTAREFAS_PDA", Int64.Type}, {"TESTEFINAL", type text}, {"VEÍCULO", type text}, {"CONTATO", type text}, {"SUPERVISOR", type text}, {"SUPERVISOR_CONTATO", type text}, {"SKILLS", type text}, {"GERENTE", type text}, {"GERENTE_CONTATO", type text}}),
+    #"Linhas Filtradas" = Table.SelectRows(#"Tipo Alterado", each [UF] = "CE" or [UF] = "PB" or [UF] = "PE" or [UF] = "RN" or [UF] = "AL" or [UF] = "BA" or [UF] = "SE"),
+    #"Personalização Adicionada" = Table.AddColumn(#"Linhas Filtradas", "DTH", each if Text.Contains([SKILLS], "DTHINST") or Text.Contains([SKILLS], "DTHREP") then 1 else 0),
+    #"Personalização Adicionada1" = Table.AddColumn(#"Personalização Adicionada", "VOZ", each if Text.Contains([SKILLS], "LAINST") or Text.Contains([SKILLS], "LAREP") then 1 else 0),
+    #"Personalização Adicionada2" = Table.AddColumn(#"Personalização Adicionada1", "VLX", each if Text.Contains([SKILLS], "ADSLINST") or Text.Contains([SKILLS], "ADSLREP") then 1 else 0),
+    #"Personalização Adicionada3" = Table.AddColumn(#"Personalização Adicionada2", "PREV", each if Text.Contains([SKILLS], "PREV") or Text.Contains([SKILLS], "CRFE") or Text.Contains([SKILLS], "CRTRCX") then 1 else 0),
+    #"Personalização Adicionada4" = Table.AddColumn(#"Personalização Adicionada3", "TP", each if Text.Contains([SKILLS], "TPINST") or Text.Contains([SKILLS], "TPREP") then 1 else 0),
+    #"Personalização Adicionada5" = Table.AddColumn(#"Personalização Adicionada4", "CABO", each if Text.Contains([SKILLS], "LACB") or Text.Contains([SKILLS], "PRECB") then 1 else 0),
+    #"Personalização Adicionada6" = Table.AddColumn(#"Personalização Adicionada5", "DG", each if Text.Contains([SKILLS], "ADSLDG") or Text.Contains([SKILLS], "ADSLRET") then 1 else 0),
+    #"Personalização Adicionada7" = Table.AddColumn(#"Personalização Adicionada6", "FTTH", each if Text.Contains([SKILLS], "FTTH") or Text.Contains([SKILLS], "FTTH") then 1 else 0),
+    #"Personalização Adicionada8" = Table.AddColumn(#"Personalização Adicionada7", "QTSKILLSVERIFICADOR", each [DTH]+[VOZ]+[VLX]+[PREV]+[TP]+[CABO]+[DG]),
+    #"Personalização Adicionada9" = Table.AddColumn(#"Personalização Adicionada8", "PERFILTECNICO", each if (([DTH]+[VOZ]+[VLX]) = 3) then "3P" else if ([VOZ]+[VLX]) = 2 then "MULTI" else if [VOZ] = 1 then "VOZ" else if [VLX] = 1 then "VELOX" else if [DTH] = 1 then "DTH" else if [TP] = 1 then "TUP" else if [CABO] = 1 then "CABO" else if [PREV] = 1 then "PREV" else if [DG] = 1 then "DG" else if [FTTH] = 1 then "FTTH" else "Outros, verificar formula PowerQuery - By Leo 71 986436319"),
+    #"Outras Colunas Removidas" = Table.SelectColumns(#"Personalização Adicionada9",{"NOMETÉCNICO", "MATRÍCULA", "MATRICULAAUTORIZADOS", "ATIVO", "NAURA", "CALENDARIO", "REGIONAL", "UF", "PRESTADORA", "GRAM", "GRA", "SETOR", "RUA", "CIDADE", "CEP", "LATITUDE", "LONGITUDE", "DISTMAXDESLOC", "TIPODETÉCNICO", "INÍCIOALMOÇO", "DURAÇÃOALMOÇO", "NTAREFAS_PDA", "TESTEFINAL", "VEÍCULO", "CONTATO", "SUPERVISOR", "SUPERVISOR_CONTATO", "SKILLS", "GERENTE", "GERENTE_CONTATO", "PERFILTECNICO"}),
+    #"Coluna Duplicada" = Table.DuplicateColumn(#"Outras Colunas Removidas", "SETOR", "SETOR - Copiar"),
+    #"Dividir Coluna pelo Delimitador" = Table.SplitColumn(#"Coluna Duplicada","SETOR - Copiar",Splitter.SplitTextByDelimiter("."),{"SETOR - Copiar.1", "SETOR - Copiar.2", "SETOR - Copiar.3", "SETOR - Copiar.4"}),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Dividir Coluna pelo Delimitador",{{"SETOR - Copiar.1", type text}, {"SETOR - Copiar.2", type text}, {"SETOR - Copiar.3", type text}, {"SETOR - Copiar.4", Int64.Type}}),
+    #"Colunas Removidas" = Table.RemoveColumns(#"Tipo Alterado1",{"SETOR - Copiar.1", "SETOR - Copiar.2", "SETOR - Copiar.4"}),
+    #"Colunas Renomeadas" = Table.RenameColumns(#"Colunas Removidas",{{"SETOR - Copiar.3", "GRAA"}}),
+    #"Duplicatas Removidas" = Table.Distinct(#"Colunas Renomeadas", {"MATRÍCULA"})
+in
+    #"Duplicatas Removidas"
