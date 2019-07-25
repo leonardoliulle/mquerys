@@ -11,6 +11,7 @@ let
     #"Personalização Adicionada2" = Table.AddColumn(#"Minutos Inseridos", "TempoReal", each ([DurationHours]*60*60)+([DurationMinutes]*60)),
     #"Personalização Adicionada3" = Table.AddColumn(#"Personalização Adicionada2", "BALONGO_BIN", each if [TempoReal] >[BALONGO]  then 1 else 0),
     #"Linhas Filtradas" = Table.SelectRows(#"Personalização Adicionada3", each ([ESTADO] <> "Cancelado")),
-    #"Personalização Adicionada4" = Table.AddColumn(#"Linhas Filtradas", "Denominador", each 1)
+    #"Personalização Adicionada4" = Table.AddColumn(#"Linhas Filtradas", "Denominador", each 1),
+    #"Linhas Agrupadas" = Table.Group(#"Personalização Adicionada4", {"ESTADO", "UF", "MATRICULATECNICO"}, {{"QtBALONGO", each List.Sum([BALONGO_BIN]), type number}, {"QTBATOTAIS", each List.Sum([Denominador]), type number}})
 in
-    #"Personalização Adicionada4
+    #"Linhas Agrupadas"

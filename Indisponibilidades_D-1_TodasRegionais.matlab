@@ -38,12 +38,19 @@ in
 
  // UNION DE VARIAS CONSULTAS
 
- let
+let
+
     Fonte = Table.Combine({controle_solicitacoes_,fila_solicitacoes_R1,fila_solicitacoes_R2}),
     #"Duplicatas Removidas" = Table.Distinct(Fonte, {"SOLICITACAO", "MATRICULA TECNICO", "TIPO", "DATA INICIO", "DATA FIM", "MOTIVO"}),
     #"Linhas Filtradas" = Table.SelectRows(#"Duplicatas Removidas", each ([STATUS] <> "DEVOLVIDO")),
     #"Data Inserida" = Table.AddColumn(#"Linhas Filtradas", "Date", each DateTime.Date([ABERTURA]), type date),
-    #"Idade Inserida" = Table.AddColumn(#"Data Inserida", "AgeFromDate", each Date.From(DateTime.LocalNow()) - [Date], type duration),
-    #"Linhas Filtradas1" = Table.SelectRows(#"Idade Inserida", each ([AgeFromDate] = #duration(1, 0, 0, 0)))
+    #"Idade Inserida" = Table.AddColumn(#"Data Inserida", "AgeFromABERTURA", each Date.From(DateTime.LocalNow()) - [Date], type duration),
+    #"Linhas Filtradas1" = Table.SelectRows(#"Idade Inserida", each ([AgeFromABERTURA] = #duration(1, 0, 0, 0))),
+    #"Data Inserida1" = Table.AddColumn(#"Linhas Filtradas1", "DINI", each DateTime.Date([DATA INICIO]), type date),
+    #"Data Inserida2" = Table.AddColumn(#"Data Inserida1", "DFIM", each DateTime.Date([DATA FIM]), type date),
+    #"Personalização Adicionada" = Table.AddColumn(#"Data Inserida2", "Custom", each [DFIM]-[DINI]),
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"Custom", Int64.Type}}),
+    #"Idade Inserida1" = Table.AddColumn(#"Tipo Alterado", "AgeFromDINI", each Date.From(DateTime.LocalNow()) - [DINI], type duration),
+    #"Linhas Filtradas2" = Table.SelectRows(#"Idade Inserida1", each ([AgeFromDINI] = #duration(1, 0, 0, 0)))
 in
-    #"Linhas Filtradas1"
+    #"Linhas Filtradas2"	
